@@ -1,0 +1,160 @@
+---
+/**
+ * Approach — Four-stage studio workflow.
+ *
+ *  - Horizontal sequence on desktop, vertical on mobile.
+ *  - Numbers (01–04) from config.
+ *  - Animated top line that grows across each stage on hover.
+ *  - General workflow principles, not claims about completed client projects.
+ */
+import { studioConfig } from '../config/studio';
+
+const { approachStages } = studioConfig;
+---
+
+<section class="section approach" id="approach" aria-labelledby="approach-heading">
+  <div class="container">
+    <header class="approach-header" data-reveal>
+      <p class="eyebrow"><span>Approach</span></p>
+      <h2 class="approach-heading" id="approach-heading">
+        A simple, repeatable rhythm<span class="accent">.</span>
+        <span class="heading-rule" aria-hidden="true"></span>
+      </h2>
+      <p class="approach-sub">
+        Four stages that turn an idea into a polished experience — these
+        are general workflow principles, not claims about completed client work.
+      </p>
+    </header>
+
+    <ol class="stages" data-reveal-stagger>
+      {
+        approachStages.map((stage, i) => (
+          <li class="stage" data-reveal style={`--stagger-index: ${i};`}>
+            <div class="stage-head">
+              <span class="index-num stage-num">{stage.number}</span>
+              <h3 class="stage-title">{stage.title}</h3>
+            </div>
+            <p class="stage-body">{stage.description}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .approach-header {
+    max-width: 50ch;
+    margin-block-end: var(--space-16);
+  }
+
+  .approach-heading {
+    font-size: clamp(2.25rem, 6vw, 4rem);
+    font-weight: 600;
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
+    margin-block-start: var(--space-4);
+  }
+
+  .approach-sub {
+    margin-block-start: var(--space-5);
+    font-size: var(--text-md);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+  }
+
+  .stages {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  /* Desktop: horizontal sequence */
+  @media (min-width: 800px) {
+    .stages {
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-6);
+    }
+    .stage:last-child {
+      border-right: none;
+    }
+    .stage {
+      border-right: 1px solid var(--color-border);
+    }
+  }
+
+  .stage {
+    position: relative;
+    padding-block: var(--space-8);
+    padding-inline-end: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    transition: padding-inline-start var(--duration-base) var(--ease-out);
+  }
+
+  .stage::after {
+    content: '';
+    position: absolute;
+    inset-block-start: -1px;
+    inset-inline-start: 0;
+    height: 1px;
+    width: 0;
+    background: var(--color-accent);
+    transition: width var(--duration-slow) var(--ease-out);
+  }
+
+  .stage:hover::after {
+    width: 100%;
+  }
+
+  .stage:hover {
+    padding-inline-start: var(--space-3);
+  }
+
+  .stage-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-block-end: var(--space-4);
+  }
+
+  .stage-num {
+    color: var(--color-accent);
+  }
+
+  .stage-title {
+    font-size: var(--text-xl);
+    font-weight: 500;
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-primary);
+    transition: color var(--duration-base) var(--ease-out);
+  }
+
+  .stage:hover .stage-title {
+    color: var(--color-accent);
+  }
+
+  .stage-body {
+    font-size: var(--text-base);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 32ch;
+  }
+
+  /* Mobile: vertical, but with a left "rail" */
+  @media (max-width: 799px) {
+    .stage {
+      padding-inline-start: var(--space-4);
+      border-left: 1px solid var(--color-border);
+      margin-inline-start: 0;
+    }
+    .stage::after {
+      top: -1px;
+      bottom: auto;
+      height: 1px;
+      width: 0;
+    }
+    .stage:hover::after {
+      width: 100%;
+    }
+  }
+</style>
