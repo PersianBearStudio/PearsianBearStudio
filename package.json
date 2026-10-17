@@ -1,0 +1,16 @@
+{
+  "name": "persianbearstudio",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "PersianBearStudio — independent web development studio website",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "tsc --noEmit --skipLibCheck -p tsconfig.json",
+    "astro": "astro"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

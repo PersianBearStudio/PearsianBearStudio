@@ -1,0 +1,153 @@
+---
+/**
+ * Capabilities — Studio's web development focus, presented as an editorial list.
+ *
+ *  - No oversized service cards (per spec).
+ *  - Clean editorial list with hover treatment (accent underline grows,
+ *    title shifts color, an arrow appears).
+ *  - Items are pulled from `studioConfig.capabilities` so editing the
+ *    config file updates the section without touching markup.
+ *  - No invented certifications, expertise levels, or completed work.
+ */
+import { studioConfig } from '../config/studio';
+
+const { capabilities, capabilitiesHeading } = studioConfig;
+---
+
+<section class="section capabilities" id="capabilities" aria-labelledby="capabilities-heading">
+  <div class="container">
+    <header class="capabilities-header" data-reveal>
+      <p class="eyebrow"><span>Capabilities</span></p>
+      <h2 class="capabilities-heading" id="capabilities-heading">
+        {capabilitiesHeading}
+        <span class="heading-rule" aria-hidden="true"></span>
+      </h2>
+      <p class="capabilities-sub">
+        A focused set of disciplines we treat as first-class concerns.
+        No invented expertise — only what we genuinely build.
+      </p>
+    </header>
+
+    <ol class="capability-list" data-reveal-stagger>
+      {
+        capabilities.map((cap, i) => (
+          <li class="capability-item" data-reveal style={`--stagger-index: ${i};`}>
+            <div class="capability-meta">
+              <span class="index-num capability-index">{String(i + 1).padStart(2, '0')}</span>
+            </div>
+            <div class="capability-body">
+              <h3 class="capability-title">
+                <span>{cap.title}</span>
+                <span class="capability-arrow" aria-hidden="true">↗</span>
+              </h3>
+              <p class="capability-description">{cap.description}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .capabilities-header {
+    max-width: 50ch;
+    margin-block-end: var(--space-16);
+  }
+
+  .capabilities-heading {
+    font-size: clamp(2.25rem, 6vw, 4rem);
+    font-weight: 600;
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
+    margin-block-start: var(--space-4);
+  }
+
+  .capabilities-sub {
+    margin-block-start: var(--space-5);
+    font-size: var(--text-md);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+  }
+
+  .capability-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .capability-item {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: var(--space-8);
+    align-items: start;
+    padding-block: var(--space-6);
+    padding-inline: var(--space-2);
+    border-top: 1px solid var(--color-border);
+    transition: padding-inline-start var(--duration-base) var(--ease-out);
+    position: relative;
+  }
+
+  .capability-item:last-child {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .capability-item::before {
+    content: '';
+    position: absolute;
+    inset-block-start: -1px;
+    inset-inline-start: 0;
+    height: 1px;
+    width: 0;
+    background: var(--color-accent);
+    transition: width var(--duration-slow) var(--ease-out);
+  }
+
+  .capability-item:hover::before,
+  .capability-item:focus-within::before {
+    width: 100%;
+  }
+
+  .capability-item:hover {
+    padding-inline-start: var(--space-5);
+  }
+
+  .capability-index {
+    color: var(--color-text-secondary);
+    transition: color var(--duration-base) var(--ease-out);
+  }
+
+  .capability-item:hover .capability-index,
+  .capability-item:focus-within .capability-index {
+    color: var(--color-accent);
+  }
+
+  .capability-title {
+    font-size: var(--text-2xl);
+    font-weight: 500;
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-primary);
+    line-height: var(--leading-snug);
+    transition: color var(--duration-base) var(--ease-out);
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-block-end: var(--space-3);
+  }
+
+  .capability-description {
+    font-size: var(--text-base);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 60ch;
+  }
+
+  @media (max-width: 599px) {
+    .capability-item {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
+    .capability-title {
+      font-size: var(--text-xl);
+    }
+  }
+</style>
