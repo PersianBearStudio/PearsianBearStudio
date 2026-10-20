@@ -4,10 +4,21 @@ Independent web development studio website — Astro + TypeScript, custom CSS,
 self-hosted fonts, deployed as a **Cloudflare Worker** that serves the static
 build through Workers Assets and applies a strict security header policy.
 
+## Requirements
+
+- **Node.js**: `18.20.8` / `^20.3.0` / `>=22.0.0` (declared in
+  `package.json` `engines` and pinned via `.node-version`).
+  - Astro 5.x supports this range; Cloudflare Pages / Workers Build defaults
+    to a Node 20.x runtime that satisfies it, so **no extra environment
+    variable configuration is required** to deploy.
+  - Do not upgrade to Astro 6.x or 7.x unless you also set
+    `NODE_VERSION=22` in the Cloudflare build environment (those versions
+    require Node 22.12+).
+
 ## Quick start (local development)
 
 ```bash
-npm install        # install dependencies (requires Node.js 18.18+ / 20+)
+npm install        # install dependencies
 npm run dev         # Astro dev server at http://localhost:4321 (HMR)
 ```
 
