@@ -1,0 +1,46 @@
+---
+/**
+ * PersianBearStudio — Home page
+ * --------------------------------
+ * Single-page editorial site. All sections rendered in a fixed order
+ * so anchor navigation always resolves.
+ *
+ * Section order:
+ *   1. Hero        (#top)        — H1
+ *   2. Studio      (#studio)     — H2
+ *   3. Philosophy  (#philosophy) — H2
+ *   4. Capabilities(#capabilities)— H2
+ *   5. Approach    (#approach)   — H2
+ *   6. ConnectUs   (#connect)    — H2 — bot cards (Telegram + Instagram)
+ *   7. Contact     (#contact)    — H2 — final call + social links
+ *
+ * Heading hierarchy:
+ *   - h1: Hero (one per page)
+ *   - h2: Each major section
+ *   - h3: Items inside sections (principles, capabilities, stages, bot cards, etc.)
+ */
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import Studio from '../components/Studio.astro';
+import Philosophy from '../components/Philosophy.astro';
+import Capabilities from '../components/Capabilities.astro';
+import Approach from '../components/Approach.astro';
+import ConnectUs from '../components/ConnectUs.astro';
+import Contact from '../components/Contact.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout>
+  <Header />
+  <main id="main">
+    <Hero />
+    <Studio />
+    <Philosophy />
+    <Capabilities />
+    <Approach />
+    <ConnectUs />
+    <Contact />
+  </main>
+  <Footer />
+</Layout>
