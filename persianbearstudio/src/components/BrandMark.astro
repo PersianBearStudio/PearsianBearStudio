@@ -1,0 +1,108 @@
+---
+/**
+ * BrandMark — PersianBearStudio brand emblem.
+ *
+ * Replaces the geometric bear SVG with the official studio brand mark
+ * (`/public/brand-mark.jpg`) — a stylized "B" lettermark that doubles as
+ * a bear's head, in cream + orange on a near-black background.
+ *
+ * Properties (kept compatible with the previous Bear component so the
+ * call sites in Header, Hero, and Footer don't need to change):
+ *   - `size`: pixel size of the rendered mark (default 32).
+ *   - `animated`: if true, the mark fades + scales in on mount (used in hero).
+ *   - `class`: extra classes for layout / sizing.
+ *   - `title`: accessible label (default "PersianBearStudio emblem").
+ *
+ * Implementation notes:
+ *   - The image is square (378x409 ≈ 1:1) so we render it inside a 1:1 box.
+ *   - `object-fit: contain` keeps the entire mark visible regardless of
+ *     container size, and prevents distortion.
+ *   - `loading="eager"` for the small header mark (above the fold) and
+ *     `loading="lazy"` for everything else. We default to lazy and let
+ *     callers override via the `loading` prop if needed.
+ *   - `decoding="async"` so the image doesn't block rendering.
+ *   - We set `width` and `height` to the requested size so the browser
+ *     reserves the box and avoids layout shift (CLS).
+ *   - The dark background of the source image matches `--color-bg`
+ *     so the mark blends seamlessly into the page.
+ */
+export interface Props {
+  size?: number | string;
+  animated?: boolean;
+  class?: string;
+  title?: string;
+  loading?: 'eager' | 'lazy';
+}
+
+const {
+  size = 32,
+  animated = false,
+  class: className = '',
+  title = 'PersianBearStudio emblem',
+  loading = 'lazy',
+} = Astro.props;
+
+const computedClass = [
+  'brand-mark',
+  animated ? 'brand-mark--animated' : '',
+  className,
+]
+  .filter(Boolean)
+  .join(' ');
+---
+
+<img
+  class={computedClass}
+  src="/brand-mark.jpg"
+  alt={title}
+  width={size}
+  height={size}
+  loading={loading}
+  decoding="async"
+  draggable="false"
+  role="img"
+  aria-label={title}
+/>
+
+<style>
+  .brand-mark {
+    display: block;
+    width: auto;
+    height: auto;
+    /* `object-fit: contain` keeps the mark fully visible at any aspect
+       ratio. The source is square so it stays undistorted. */
+    object-fit: contain;
+    /* Match the page background so the dark border of the source image
+       blends seamlessly. The source is near-black on near-black, so the
+       transition is invisible. */
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+    /* Avoid pixel-art look at small sizes — keep it crisp at large sizes. */
+    image-rendering: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* Subtle entrance for hero usage — fades + scales in. */
+  .brand-mark--animated {
+    opacity: 0;
+    transform: scale(0.94);
+    animation: brand-mark-in 900ms var(--ease-out) forwards;
+    animation-delay: 200ms;
+  }
+
+  @keyframes brand-mark-in {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .brand-mark--animated {
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+    }
+  }
+</style>

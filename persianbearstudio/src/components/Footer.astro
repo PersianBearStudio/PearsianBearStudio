@@ -1,0 +1,207 @@
+---
+/**
+ * Footer — Quiet brand sign-off.
+ *
+ *  - Brand mark + wordmark.
+ *  - Sign-off (both EN + FA via <I18n>).
+ *  - Configured social links (omitted when empty).
+ *  - Dynamically generated current year (SSR-safe).
+ *  - Subtle return-to-top control (localized label).
+ *  - No personal profiles, fake contact info, or unnecessary footer columns.
+ */
+import BrandMark from './BrandMark.astro';
+import SocialIcon from './SocialIcon.astro';
+import I18n from './I18n.astro';
+import { studioConfig, configuredSocial } from '../config/studio';
+
+const social = configuredSocial();
+const year = new Date().getFullYear();
+---
+
+<footer class="footer" aria-labelledby="footer-heading">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <a href="#top" class="footer-logo" aria-label={studioConfig.brandName}>
+        <BrandMark size={28} loading="lazy" />
+        <span class="footer-wordmark">{studioConfig.wordmark}</span>
+      </a>
+      <p class="footer-sign-off" id="footer-heading">
+        <I18n k="footerSignOff" />
+      </p>
+    </div>
+
+    <div class="footer-meta">
+      <ul class="footer-social" aria-label="Social links">
+        {
+          social.map((s) => (
+            <li>
+              <a
+                href={s.url}
+                class="footer-social-link"
+                rel="noopener noreferrer"
+                target={s.url.startsWith('mailto:') ? '_self' : '_blank'}
+                aria-label={s.label}
+              >
+                <SocialIcon key={s.key} size={18} />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="footer-bottom">
+        <p class="footer-copy">
+          © <span data-year>{year}</span> {studioConfig.brandName}
+        </p>
+        <a href="#top" class="return-top">
+          <I18n k="returnToTop" as="span" />
+          <span class="return-top-arrow-wrap" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 11V3M7 3L3 7M7 3l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--color-border);
+    padding-block: var(--space-16) var(--space-10);
+    background: var(--color-bg);
+  }
+
+  .footer-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-12);
+    align-items: start;
+  }
+
+  @media (min-width: 800px) {
+    .footer-inner {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: var(--space-16);
+    }
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .footer-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-text-primary);
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .footer-logo:hover {
+    opacity: 0.8;
+  }
+
+  .footer-wordmark {
+    font-size: var(--text-base);
+    font-weight: 600;
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .footer-sign-off {
+    font-size: var(--text-xl);
+    font-weight: 500;
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-primary);
+    max-width: 26ch;
+    line-height: var(--leading-snug);
+  }
+
+  .footer-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .footer-social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .footer-social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    transition:
+      color var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out),
+      background-color var(--duration-base) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+  }
+
+  .footer-social-link:hover,
+  .footer-social-link:focus-visible {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+  }
+
+  .footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-4);
+    padding-block-start: var(--space-6);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .footer-copy {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .return-top {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  @media (max-width: 799px) {
+    .footer-bottom {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Update the copyright year client-side in case the page is served across
+   * a year boundary (keeps it always current without a server round-trip).
+   */
+  function updateYear() {
+    const el = document.querySelector<HTMLElement>('[data-year]');
+    if (el) el.textContent = String(new Date().getFullYear());
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateYear);
+  } else {
+    updateYear();
+  }
+</script>

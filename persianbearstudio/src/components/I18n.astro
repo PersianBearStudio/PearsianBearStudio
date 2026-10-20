@@ -1,0 +1,44 @@
+---
+/**
+ * I18n — Render a string in both languages server-side.
+ *
+ * Usage:
+ *   <I18n k="navStudio" />
+ *
+ * Renders:
+ *   <span class="i18n-en">Studio</span><span class="i18n-fa">استودیو</span>
+ *
+ * CSS in global.css toggles which one is visible based on the <html lang>
+ * attribute (set pre-paint by an inline script in Layout.astro).
+ *
+ * The visible-by-default language is English (matches the server-rendered
+ * `lang="en"` attribute), so the page is fully functional without JS.
+ *
+ * When you need a non-span element (e.g. for a heading or button), pass
+ * the `as` prop:
+ *   <I18n k="studioHeading" as="h2" class="studio-heading" />
+ *
+ * For attribute-level i18n (aria-label, alt, etc.), use the lower-level
+ * `i18nAttr` helper exported from translations.ts via the inline script
+ * pattern — see Header.astro for examples.
+ */
+import { t } from '../config/translations';
+
+export interface Props {
+  /** Translation key. */
+  k: keyof typeof import('../config/translations').translations['en'];
+  /** Element tag (default: 'span'). Must be a tag that can contain text. */
+  as?: keyof HTMLElementTagNameMap;
+  /** Extra classes for layout / styling. */
+  class?: string;
+  /** Id for the element (used for aria-labelledby etc.). */
+  id?: string;
+}
+
+const { k, as = 'span', class: className = '', id } = Astro.props;
+
+const Tag = as;
+const cls = className ? ` ${className}` : '';
+---
+
+<Tag class={`i18n-en${cls}`} id={id}>{t('en')[k]}</Tag><Tag class={`i18n-fa${cls}`} id={id ? `${id}-fa` : undefined}>{t('fa')[k]}</Tag>
