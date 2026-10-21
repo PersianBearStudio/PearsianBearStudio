@@ -1,0 +1,297 @@
+---
+/**
+ * ConnectUs — Bot / channel / social "connect with us" section.
+ *
+ * Three cards in a responsive grid:
+ *   1. Telegram Bot       — paper-plane icon
+ *   2. Telegram Channel   — megaphone icon (visually distinct from the bot)
+ *   3. Instagram           — square-with-circle icon
+ *
+ * Each card has:
+ *   - Icon
+ *   - Title + description (both EN + FA via <I18n>)
+ *   - CTA button that opens the destination URL in a new tab
+ *   - Handle / @username display (always dir="ltr" — handles are Latin)
+ *
+ * Card URLs come from src/config/translations.ts (BOTS array). To add a
+ * fourth card, edit that array and add a card below.
+ *
+ * Section id: #connect
+ * Nav link: "Connect" / "ارتباط" (between Capabilities and Contact)
+ */
+import I18n from './I18n.astro';
+import SocialIcon from './SocialIcon.astro';
+import { BOTS } from '../config/translations';
+
+const telegramBot = BOTS.find((b) => b.key === 'telegram-bot');
+const telegramChannel = BOTS.find((b) => b.key === 'telegram-channel');
+const instagram = BOTS.find((b) => b.key === 'instagram');
+
+/**
+ * Map a bot card to the tuple of strings + icon key used in the markup.
+ * Keeps the JSX below declarative — adding a 4th card is one new entry.
+ */
+type CardConfig = {
+  data?: typeof BOTS[number] | undefined;
+  iconKey: 'telegram' | 'telegram-channel' | 'instagram';
+  titleKey: 'connectTelegramTitle' | 'connectChannelTitle' | 'connectInstagramTitle';
+  descKey: 'connectTelegramDesc' | 'connectChannelDesc' | 'connectInstagramDesc';
+  ctaKey: 'connectTelegramCta' | 'connectChannelCta' | 'connectInstagramCta';
+};
+
+const cards: CardConfig[] = [
+  {
+    data: telegramBot,
+    iconKey: 'telegram',
+    titleKey: 'connectTelegramTitle',
+    descKey: 'connectTelegramDesc',
+    ctaKey: 'connectTelegramCta',
+  },
+  {
+    data: telegramChannel,
+    iconKey: 'telegram-channel',
+    titleKey: 'connectChannelTitle',
+    descKey: 'connectChannelDesc',
+    ctaKey: 'connectChannelCta',
+  },
+  {
+    data: instagram,
+    iconKey: 'instagram',
+    titleKey: 'connectInstagramTitle',
+    descKey: 'connectInstagramDesc',
+    ctaKey: 'connectInstagramCta',
+  },
+];
+---
+
+<section class="section connect" id="connect" aria-labelledby="connect-heading">
+  <div class="container">
+    <header class="connect-header" data-reveal>
+      <p class="eyebrow"><I18n k="connectEyebrow" /></p>
+      <h2 class="connect-heading" id="connect-heading">
+        <I18n k="connectHeading" />
+        <span class="heading-rule" aria-hidden="true"></span>
+      </h2>
+      <p class="connect-sub"><I18n k="connectSub" /></p>
+    </header>
+
+    <div class="connect-grid" data-reveal-stagger>
+      {
+        cards.map((card, i) =>
+          card.data ? (
+            <article
+              class="bot-card"
+              data-reveal
+              style={`--stagger-index: ${i};`}
+            >
+              <div class="bot-card-icon">
+                <SocialIcon key={card.iconKey} size={28} />
+              </div>
+              <div class="bot-card-body">
+                <h3 class="bot-card-title">
+                  <I18n k={card.titleKey} />
+                </h3>
+                <p class="bot-card-desc">
+                  <I18n k={card.descKey} />
+                </p>
+                <p class="bot-card-handle" dir="ltr">{card.data.handle}</p>
+              </div>
+              <a
+                href={card.data.url}
+                class="bot-card-cta"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-magnetic
+              >
+                <I18n k={card.ctaKey} />
+                <span class="bot-card-arrow" aria-hidden="true">↗</span>
+              </a>
+            </article>
+          ) : null
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .connect-header {
+    max-width: 50ch;
+    margin-block-end: var(--space-16);
+  }
+
+  .connect-heading {
+    font-size: clamp(2.25rem, 6vw, 4rem);
+    font-weight: 600;
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
+    margin-block-start: var(--space-4);
+  }
+
+  .connect-sub {
+    margin-block-start: var(--space-5);
+    font-size: var(--text-md);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+  }
+
+  .connect-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  /* On tablet: 2 cards per row. On desktop: 3 cards per row. */
+  @media (min-width: 700px) {
+    .connect-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-6);
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .connect-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-6);
+    }
+  }
+
+  .bot-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-8);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-elevated);
+    transition:
+      border-color var(--duration-base) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out),
+      background-color var(--duration-base) var(--ease-out);
+    overflow: hidden;
+  }
+
+  .bot-card::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, var(--color-accent), transparent 70%);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-slow) var(--ease-out);
+  }
+
+  .bot-card:hover::before,
+  .bot-card:focus-within::before {
+    transform: scaleX(1);
+  }
+
+  .bot-card:hover {
+    border-color: var(--color-accent-line);
+    transform: translateY(-4px);
+  }
+
+  .bot-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-accent);
+    transition: color var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+  }
+
+  .bot-card:hover .bot-card-icon {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .bot-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    flex: 1;
+  }
+
+  .bot-card-title {
+    font-size: var(--text-xl);
+    font-weight: 500;
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-primary);
+    line-height: var(--leading-snug);
+  }
+
+  .bot-card-desc {
+    font-size: var(--text-base);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 40ch;
+  }
+
+  .bot-card-handle {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+    letter-spacing: var(--tracking-wide);
+    margin-block-start: var(--space-2);
+  }
+
+  .bot-card-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-6);
+    border: 1px solid var(--color-text-primary);
+    border-radius: var(--radius-pill);
+    color: var(--color-text-primary);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    transition:
+      color var(--duration-base) var(--ease-out),
+      background-color var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+    position: relative;
+    align-self: flex-start;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bot-card-cta:hover,
+  .bot-card-cta:focus-visible {
+    color: var(--color-bg);
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .bot-card-arrow {
+    display: inline-block;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .bot-card-cta:hover .bot-card-arrow,
+  .bot-card-cta:focus-visible .bot-card-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  /* Persian: remove uppercase + tighten tracking on the CTA */
+  html[lang='fa'] .bot-card-cta {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  @media (max-width: 599px) {
+    .bot-card {
+      padding: var(--space-6);
+    }
+  }
+</style>
