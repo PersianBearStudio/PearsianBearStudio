@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://persianbearstudio.com/sitemap-index.xml
