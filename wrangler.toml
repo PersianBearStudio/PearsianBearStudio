@@ -1,0 +1,17 @@
+# PersianBearStudio — local Cloudflare runtime configuration.
+#
+# Deployment (Cloudflare Pages via Git integration):
+#   Dashboard > Workers & Pages > Create > Pages > Connect to Git,
+#   build command `npm run build`, output directory `dist`, then set
+#   the environment variables listed in .env.example / docs/SETUP.md.
+#   (No pages_build_output_dir here: the @astrojs/cloudflare adapter
+#   generates its own prerender configuration during `astro build`,
+#   which conflicts with that setting.)
+#
+# Local development:
+#   `astro dev` proxies the real Cloudflare runtime through wrangler;
+#   secrets for local testing belong in .dev.vars (git-ignored).
+
+name = "persianbearstudio"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]

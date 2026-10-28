@@ -1,0 +1,28 @@
+---
+/**
+ * Persian (Farsi) page — project inquiry, RTL.
+ * Prerendered to static HTML; only /api/inquiry runs on the server.
+ */
+import Layout from '../layouts/Layout.astro';
+import ProjectInquiryForm from '../components/ProjectInquiryForm.astro';
+
+export const prerender = true;
+---
+
+<Layout
+  lang="fa"
+  title="شروع پروژه — پرشین بیر استودیو"
+  description="پروژه وب‌سایت یا وب‌اپلیکیشن خود را برای پرشین بیر استودیو توضیح دهید. هر درخواست را بررسی می‌کنیم و با ایمیل پاسخ می‌دهیم."
+>
+  <section class="hero">
+    <p class="hero-eyebrow">درخواست پروژه</p>
+    <h1 class="hero-title">بیایید چیزی بسازیم که بازدیدکنندگان فراموش نکنند.</h1>
+    <p class="hero-sub">
+      وب‌سایت شرکتی، فروشگاه اینترنتی، صفحه فرود و وب‌اپلیکیشن — با دقت
+      طراحی و ساخته می‌شود. فرم زیر را پر کنید و از پروژه‌تان بگویید؛ ما به
+      هر درخواست جدی پاسخ می‌دهیم.
+    </p>
+  </section>
+
+  <ProjectInquiryForm lang="fa" />
+</Layout>

@@ -1,0 +1,28 @@
+---
+/**
+ * English home page — project inquiry.
+ * Prerendered to static HTML; only /api/inquiry runs on the server.
+ */
+import Layout from '../layouts/Layout.astro';
+import ProjectInquiryForm from '../components/ProjectInquiryForm.astro';
+
+export const prerender = true;
+---
+
+<Layout
+  lang="en"
+  title="Start your project — PersianBearStudio"
+  description="Tell PersianBearStudio about your website or web application project. We review every inquiry and reply by email."
+>
+  <section class="hero">
+    <p class="hero-eyebrow">Project inquiry</p>
+    <h1 class="hero-title">Let's build something your visitors remember.</h1>
+    <p class="hero-sub">
+      Business websites, e-commerce, landing pages and web applications —
+      designed and built with care. Fill in the form below and tell us
+      about your project; we reply to every serious inquiry.
+    </p>
+  </section>
+
+  <ProjectInquiryForm lang="en" />
+</Layout>
