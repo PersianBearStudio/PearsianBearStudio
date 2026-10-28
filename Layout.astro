@@ -1,0 +1,167 @@
+---
+/**
+ * Layout — Document shell shared by every page.
+ *
+ *  - Bilingual (English / Persian) document. Default language is English.
+ *  - Self-hosted Manrope variable font via @fontsource-variable (Latin).
+ *    Persian uses a fallback stack that includes "Vazirmatn" if installed
+ *    locally on the user's machine; otherwise the system Persian font.
+ *  - Design tokens, global styles, motion system (CSS-first).
+ *  - Comprehensive SEO metadata (title, description, OG, Twitter, canonical).
+ *  - Conditional scroll-progress bar based on config.decorative.scrollProgress.
+ *  - Conditional cursor-accent based on config.decorative.cursorAccent.
+ *    The native cursor is hidden on fine-pointer devices; the orange dot
+ *    (cursor-accent) follows the mouse.
+ *  - Skip link for keyboard users.
+ *  - Sets `has-js` / `is-fine-pointer` / `prefers-reduced-motion` / `lang`
+ *    / `dir` flags on <html> as early as possible to avoid FOUC.
+ */
+import '@fontsource-variable/manrope';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import '../styles/motion.css';
+import '../styles/polish.css';
+import { studioConfig } from '../config/studio';
+
+export interface Props {
+  title?: string;
+  description?: string;
+  /** Path relative to site root, e.g. "/blog/foo". Defaults to "/". */
+  path?: string;
+}
+
+const {
+  title = `${studioConfig.brandName} — ${studioConfig.primaryTagline.join(' ')}`,
+  description = studioConfig.metaDescription,
+  path = '/',
+} = Astro.props;
+
+const canonical = new URL(path, studioConfig.canonicalUrl).href;
+// Prefer the PNG OG image (more widely supported by social scrapers);
+// SVG is unsupported by several major platforms.
+const ogImageUrl = new URL('/og-image.png', studioConfig.canonicalUrl).href;
+const faviconSvgUrl = new URL('/favicon.svg', studioConfig.canonicalUrl).href;
+const faviconIcoUrl = new URL('/favicon.ico', studioConfig.canonicalUrl).href;
+const favicon32Url = new URL('/favicon-32.png', studioConfig.canonicalUrl).href;
+const appleTouchIconUrl = new URL('/apple-touch-icon.png', studioConfig.canonicalUrl).href;
+
+// Early-flags script: runs before paint so initial state is correct.
+//   - `has-js`: JS is available — enables reveal animations
+//   - `is-fine-pointer`: pointer is fine (desktop mouse / trackpad) AND
+//     the primary input supports hover. Touch-only devices, touch + pen
+//     without hover, and headless browsers that report (hover: none) all
+//     skip the custom cursor, magnetic CTA, and parallax — they would
+//     not feel right without a real hover-capable pointer.
+//   - `has-motion` / no-`has-motion`: gated by prefers-reduced-motion
+//   - <html lang/dir>: read from localStorage('pbs-lang') so the user's
+//     language choice is applied before any content paints (no FOUC).
+//     Default is `en`/`ltr` when nothing is stored or JS/storage is missing.
+const earlyFlags = `
+  (function () {
+    try {
+      var d = document.documentElement;
+      d.classList.add('has-js');
+      // is-fine-pointer: requires BOTH a precise pointer AND hover
+      // capability. iPad-with-pencil reports pointer:fine but hover:none,
+      // and should NOT get the custom cursor.
+      if (window.matchMedia('(pointer: fine) and (hover: hover)').matches) {
+        d.classList.add('is-fine-pointer');
+      }
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      var onReduce = function () {
+        if (reduce.matches) { d.classList.remove('has-motion'); }
+        else { d.classList.add('has-motion'); }
+      };
+      onReduce();
+      reduce.addEventListener('change', onReduce);
+    } catch (e) {}
+    try {
+      var stored = null;
+      try { stored = window.localStorage.getItem('pbs-lang'); } catch (e) {}
+      if (stored === 'fa') {
+        d.setAttribute('lang', 'fa');
+        d.setAttribute('dir', 'rtl');
+      } else {
+        d.setAttribute('lang', 'en');
+        d.setAttribute('dir', 'ltr');
+      }
+    } catch (e) {}
+  })();
+`;
+---
+
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Primary SEO -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#101114" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Icons — SVG (modern browsers) preferred, with PNG + ICO fallbacks -->
+    <link rel="icon" type="image/svg+xml" href={faviconSvgUrl} />
+    <link rel="icon" type="image/png" sizes="32x32" href={favicon32Url} />
+    <link rel="icon" type="image/x-icon" href={faviconIcoUrl} />
+    <link rel="apple-touch-icon" sizes="180x180" href={appleTouchIconUrl} />
+    <link rel="mask-icon" href={faviconSvgUrl} color="#F07835" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={studioConfig.brandName} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${studioConfig.brandName} — ${studioConfig.primaryTagline.join(' ')}`} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="fa_IR" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content={`${studioConfig.brandName} — ${studioConfig.primaryTagline.join(' ')}`} />
+
+    <!-- Sitemap -->
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Early feature flags (must run before paint) -->
+    <script is:inline set:html={earlyFlags} />
+  </head>
+  <body>
+    <a href="#main" class="skip-link"><span class="i18n-en">Skip to content</span><span class="i18n-fa">پرش به محتوا</span></a>
+
+    {
+      studioConfig.decorative.scrollProgress && (
+        <div class="scroll-progress" data-scroll-progress aria-hidden="true" />
+      )
+    }
+
+    {
+      studioConfig.decorative.cursorAccent && (
+        <>
+          <div class="cursor-dot" data-cursor-dot aria-hidden="true" />
+          <div class="cursor-ring" data-cursor-ring aria-hidden="true" />
+        </>
+      )
+    }
+
+    <slot />
+
+    <!-- Motion system (deferred; never blocks rendering) -->
+    <script>
+      import '../scripts/motion.ts';
+    </script>
+  </body>
+</html>
