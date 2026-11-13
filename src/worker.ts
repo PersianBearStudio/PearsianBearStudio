@@ -14,13 +14,13 @@ interface Env {
   ASSETS: {
     fetch: (request: Request) => Promise<Response>;
   };
-  RESEND_API_KEY?: string;
-  RESEND_FROM_EMAIL?: string;
-  INQUIRY_TO_EMAIL?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_SECRET_KEY?: string;
+  TELEGRAM_BOT_TOKEN?: string;
+  TELEGRAM_ADMIN_CHAT_IDS?: string;
 }
 
 const INQUIRY_PATH = '/api/inquiry';
-const DEFAULT_INQUIRY_TO_EMAIL = 'persianbearstudio@gmail.com';
 const MAX_INQUIRY_BODY_BYTES = 16_384;
 
 const SECURITY_HEADERS: Readonly<Record<string, string>> = {
@@ -69,45 +69,76 @@ function escapeHtml(value: string): string {
   });
 }
 
-function inquiryText(data: InquiryPayload): string {
+function telegramMessage(data: InquiryPayload, orderId: string): string {
+  const clip = (value: string, max: number) =>
+    value.length > max ? `${value.slice(0, max)}…` : value;
+  const field = (label: string, value: string, max = 180) =>
+    `<b>${label}:</b> ${escapeHtml(clip(value || 'Not provided', max))}`;
+
   return [
-    `Name: ${data.fullName}`,
-    `Email: ${data.email}`,
-    `Project type: ${data.projectType}`,
-    `Company: ${data.company || 'Not provided'}`,
-    `Audience: ${data.audience || 'Not provided'}`,
-    `Current URL: ${data.currentUrl || 'Not provided'}`,
-    `Launch timeframe: ${data.launchTimeframe || 'Not provided'}`,
-    `Budget: ${data.budget || 'Not provided'}`,
+    '📩 <b>New project inquiry</b>',
+    `<b>Order ID:</b> <code>${escapeHtml(orderId)}</code>`,
+    field('Name', data.fullName),
+    field('Email', data.email),
+    field('Project type', data.projectType),
+    field('Company', data.company),
+    field('Audience', data.audience),
+    field('Current URL', data.currentUrl),
+    field('Launch timeframe', data.launchTimeframe),
+    field('Budget', data.budget),
     '',
-    'Short description:',
-    data.shortDescription,
+    '<b>Short description:</b>',
+    escapeHtml(clip(data.shortDescription, 650)),
     '',
-    'Problem to solve:',
-    data.problem || 'Not provided',
+    '<b>Problem to solve:</b>',
+    escapeHtml(clip(data.problem, 450)),
     '',
-    'Additional details:',
-    data.additionalDetails || 'Not provided',
+    '<b>Additional details:</b>',
+    escapeHtml(clip(data.additionalDetails, 650)),
   ].join('\n');
 }
 
-function inquiryHtml(data: InquiryPayload): string {
-  const rows = [
-    ['Name', data.fullName],
-    ['Email', data.email],
-    ['Project type', data.projectType],
-    ['Company', data.company || 'Not provided'],
-    ['Audience', data.audience || 'Not provided'],
-    ['Current URL', data.currentUrl || 'Not provided'],
-    ['Launch timeframe', data.launchTimeframe || 'Not provided'],
-    ['Budget', data.budget || 'Not provided'],
-    ['Short description', data.shortDescription],
-    ['Problem to solve', data.problem || 'Not provided'],
-    ['Additional details', data.additionalDetails || 'Not provided'],
-  ];
-  return `<h1>New project inquiry</h1><dl>${rows
-    .map(([label, value]) => `<dt><strong>${escapeHtml(label)}</strong></dt><dd>${escapeHtml(value).replace(/\n/g, '<br>')}</dd>`)
-    .join('')}</dl>`;
+async function notifyTelegram(
+  env: Env,
+  data: InquiryPayload,
+  orderId: string,
+): Promise<void> {
+  const token = env.TELEGRAM_BOT_TOKEN?.trim();
+  const chatIds = (env.TELEGRAM_ADMIN_CHAT_IDS ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => /^-?\d+$/.test(id));
+
+  if (!token || chatIds.length === 0) {
+    console.error('Telegram notification is not configured.');
+    return;
+  }
+
+  const text = telegramMessage(data, orderId);
+  const results = await Promise.allSettled(
+    chatIds.map(async (chatId) => {
+      const response = await fetch(
+        `https://api.telegram.org/bot${token}/sendMessage`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true,
+          }),
+        },
+      );
+      if (!response.ok) {
+        console.error('Telegram notification failed with status:', response.status);
+      }
+    }),
+  );
+
+  if (results.some((result) => result.status === 'rejected')) {
+    console.error('One or more Telegram notifications could not be delivered.');
+  }
 }
 
 async function handleInquiry(request: Request, env: Env, url: URL): Promise<Response> {
@@ -155,55 +186,80 @@ async function handleInquiry(request: Request, env: Env, url: URL): Promise<Resp
     return jsonResponse({ ok: false, error: 'Please check the inquiry fields.' }, 400);
   }
 
-  const fallbackEmail = env.INQUIRY_TO_EMAIL?.trim() || DEFAULT_INQUIRY_TO_EMAIL;
-  if (!env.RESEND_API_KEY?.trim() || !env.RESEND_FROM_EMAIL?.trim()) {
+  const supabaseUrl = env.SUPABASE_URL?.trim().replace(/\/+$/, '');
+  const supabaseSecretKey = env.SUPABASE_SECRET_KEY?.trim();
+  if (!supabaseUrl || !supabaseSecretKey) {
+    console.error('Supabase inquiry storage is not configured.');
     return jsonResponse(
-      {
-        ok: false,
-        error: `Inquiry delivery is not configured. Please email ${fallbackEmail} directly.`,
-        fallbackEmail,
-      },
+      { ok: false, error: 'The inquiry service is not configured yet. Please try again later.' },
       503,
     );
   }
 
+  let parsedSupabaseUrl: URL;
   try {
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: env.RESEND_FROM_EMAIL,
-        to: [fallbackEmail],
-        reply_to: validation.data.email,
-        subject: `New project inquiry from ${validation.data.fullName}`,
-        text: inquiryText(validation.data),
-        html: inquiryHtml(validation.data),
-      }),
-    });
+    parsedSupabaseUrl = new URL(supabaseUrl);
+    if (parsedSupabaseUrl.protocol !== 'https:') throw new Error('HTTPS required');
+  } catch {
+    console.error('SUPABASE_URL must be a valid HTTPS URL.');
+    return jsonResponse({ ok: false, error: 'The inquiry service is temporarily unavailable.' }, 503);
+  }
 
-    if (!resendResponse.ok) {
-      return jsonResponse(
-        {
-          ok: false,
-          error: `We could not send your inquiry right now. Please email ${fallbackEmail} directly.`,
-          fallbackEmail,
+  let orderId: string;
+  try {
+    const dbResponse = await fetch(
+      `${parsedSupabaseUrl.origin}/rest/v1/orders?select=id`,
+      {
+        method: 'POST',
+        headers: {
+          apikey: supabaseSecretKey,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation',
         },
+        body: JSON.stringify({
+          full_name: validation.data.fullName,
+          email: validation.data.email,
+          project_type: validation.data.projectType,
+          short_description: validation.data.shortDescription,
+          company: validation.data.company || null,
+          audience: validation.data.audience || null,
+          current_url: validation.data.currentUrl || null,
+          problem: validation.data.problem || null,
+          launch_timeframe: validation.data.launchTimeframe || null,
+          budget: validation.data.budget || null,
+          additional_details: validation.data.additionalDetails || null,
+        }),
+      },
+    );
+
+    if (!dbResponse.ok) {
+      console.error('Supabase order insert failed with status:', dbResponse.status);
+      return jsonResponse(
+        { ok: false, error: 'We could not save your inquiry right now. Please try again later.' },
+        502,
+      );
+    }
+
+    const inserted = (await dbResponse.json()) as Array<{ id?: string }>;
+    orderId = inserted[0]?.id ?? '';
+    if (!orderId) {
+      console.error('Supabase insert returned no order ID.');
+      return jsonResponse(
+        { ok: false, error: 'We could not confirm your inquiry was saved. Please try again.' },
         502,
       );
     }
   } catch {
+    console.error('Supabase order insert request failed.');
     return jsonResponse(
-      {
-        ok: false,
-        error: `We could not send your inquiry right now. Please email ${fallbackEmail} directly.`,
-        fallbackEmail,
-      },
+      { ok: false, error: 'We could not reach the inquiry service right now. Please try again later.' },
       502,
     );
   }
+
+  // Database storage is the source of truth. A temporary Telegram outage must
+  // not make a successfully stored inquiry appear to have failed to the visitor.
+  await notifyTelegram(env, validation.data, orderId);
 
   return jsonResponse({ ok: true }, 200);
 }
