@@ -159,10 +159,11 @@ inquiryMarkers.forEach(([label, pattern]) => {
 
 const worker = readFileSync(join(ROOT, 'src/worker.ts'), 'utf8');
 [
-  ['/api/inquiry route', /INQUIRY_PATH\s*=\s*['"]\/api\/inquiry/],
-  ['Resend API delivery', /api\.resend\.com\/emails/],
-  ['Resend API key binding', /RESEND_API_KEY/],
-  ['inquiry recipient fallback', /persianbearstudio@gmail\.com/],
+  ['/api/inquiry route', /INQUIRY_PATH\\s*=\\s*['"]\\/api\\/inquiry/],
+  ['Supabase orders endpoint', /\\/rest\\/v1\\/orders/],
+  ['Supabase secret binding', /SUPABASE_SECRET_KEY/],
+  ['Telegram sendMessage endpoint', /api\\.telegram\\.org\\/bot/],
+  ['Telegram admin chat IDs binding', /TELEGRAM_ADMIN_CHAT_IDS/],
   ['same-origin CSP connect-src', /connect-src ['"]self['"]/],
 ].forEach(([label, pattern]) => {
   if (pattern.test(worker)) ok(`${label} present`);
