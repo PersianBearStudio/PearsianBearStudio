@@ -10,7 +10,7 @@
  *   - SEO essentials present: title, meta description, canonical, OG image
  *   - no inline event handlers (onclick=) or javascript: URIs
  *   - configured contact channels and project inquiry form render
- *   - the Worker includes the inquiry API and Resend delivery markers
+ *   - the Worker includes the inquiry API, Supabase storage, and Telegram notification markers
  *
  * Usage:  node scripts/smoke-test.mjs
  * Exit:  0 = pass, 1 = fail with details
